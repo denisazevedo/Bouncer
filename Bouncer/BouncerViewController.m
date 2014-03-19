@@ -9,21 +9,36 @@
 #import "BouncerViewController.h"
 
 @interface BouncerViewController ()
-
+@property (nonatomic, strong) UIView *redBlock;
 @end
 
 @implementation BouncerViewController
 
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+static CGSize blockSize = { 40 , 40 };
+
+- (UIView *)addBlockOffsetFromCenterBy:(UIOffset)offset {
+    
+    CGPoint blockCenter = CGPointMake(CGRectGetMidX(self.view.bounds) + offset.horizontal,
+                                      CGRectGetMidY(self.view.bounds) + offset.vertical);
+    
+    CGRect blockFrame = CGRectMake(blockCenter.x - blockSize.width/2,
+                                   blockCenter.y - blockSize.height/2,
+                                   blockSize.width,
+                                   blockSize.height);
+    
+    UIView *block = [[UIView alloc] initWithFrame:blockFrame];
+    [self.view addSubview:block];
+    return block;
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)startGame {
+    self.redBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(0, 0)];
+    self.redBlock.backgroundColor = [UIColor redColor];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self startGame];
 }
 
 @end

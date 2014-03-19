@@ -114,10 +114,6 @@
 		6A4E5E3218D2AC56009F0B2F /* Bouncer */ = {
 			isa = PBXGroup;
 			children = (
-				6A4E5E3B18D2AC56009F0B2F /* BouncerAppDelegate.h */,
-				6A4E5E3C18D2AC56009F0B2F /* BouncerAppDelegate.m */,
-				6A4E5E3E18D2AC56009F0B2F /* Main_iPhone.storyboard */,
-				6A4E5E4118D2AC56009F0B2F /* Main_iPad.storyboard */,
 				6A4E5E4418D2AC56009F0B2F /* BouncerViewController.h */,
 				6A4E5E4518D2AC56009F0B2F /* BouncerViewController.m */,
 				6A4E5E4718D2AC56009F0B2F /* Images.xcassets */,
@@ -129,6 +125,10 @@
 		6A4E5E3318D2AC56009F0B2F /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				6A4E5E3B18D2AC56009F0B2F /* BouncerAppDelegate.h */,
+				6A4E5E3C18D2AC56009F0B2F /* BouncerAppDelegate.m */,
+				6A4E5E3E18D2AC56009F0B2F /* Main_iPhone.storyboard */,
+				6A4E5E4118D2AC56009F0B2F /* Main_iPad.storyboard */,
 				6A4E5E3418D2AC56009F0B2F /* Bouncer-Info.plist */,
 				6A4E5E3518D2AC56009F0B2F /* InfoPlist.strings */,
 				6A4E5E3818D2AC56009F0B2F /* main.m */,
@@ -471,6 +471,7 @@
 				6A4E5E6018D2AC56009F0B2F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		6A4E5E6118D2AC56009F0B2F /* Build configuration list for PBXNativeTarget "BouncerTests" */ = {
 			isa = XCConfigurationList;
@@ -479,6 +480,7 @@
 				6A4E5E6318D2AC56009F0B2F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
