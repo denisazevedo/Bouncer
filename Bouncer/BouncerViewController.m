@@ -17,9 +17,21 @@
 @property (nonatomic, weak) UICollisionBehavior *collider;
 @property (nonatomic, weak) UIDynamicItemBehavior *elastic;
 @property (nonatomic, strong) CMMotionManager *motionManager;
+// scoring properties
+@property (nonatomic, weak) UILabel *scoreLabel;
+@property (nonatomic) double lastScore;
+@property (nonatomic) double maxScore;
+@property (nonatomic) double blackBlockDistanceTraveled;
+@property (nonatomic, strong) NSDate *lastRecordedBlackBlockTravelTime;
+@property (nonatomic) double cumulativeBlackBlockTravelTime;
+@property (nonatomic, weak) UIDynamicItemBehavior *blackBlockTracker;
+@property (nonatomic, weak) UICollisionBehavior *scoreBoundary;
+@property (nonatomic) CGPoint scoreBoundaryCenter;
 @end
 
 @implementation BouncerViewController
+
+#pragma mark - Block Creation
 
 static CGSize blockSize = { 40 , 40 };
 
@@ -37,6 +49,8 @@ static CGSize blockSize = { 40 , 40 };
     [self.view addSubview:block];
     return block;
 }
+
+#pragma mark - UIDynamicAnimator and Behaviors
 
 - (UIDynamicAnimator *)animator {
     if (!_animator) _animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
@@ -87,7 +101,7 @@ static CGSize blockSize = { 40 , 40 };
     [self.collider addItem:self.redBlock];
     [self.elastic addItem:self.redBlock];
     [self.gravity addItem:self.redBlock];
-
+    
     self.blackBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(100, 0)];
     self.blackBlock.backgroundColor = [UIColor blackColor];
     [self.collider addItem:self.blackBlock];
@@ -109,13 +123,93 @@ static CGSize blockSize = { 40 , 40 };
                      case UIInterfaceOrientationPortraitUpsideDown:
                          self.gravity.gravityDirection = CGVectorMake(-x, y); break;
                  }
+                 [self updateScore];
              }];
     }
 }
 
+#pragma mark - View Controller Lifecycle
+
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self startGame];
+}
+
+#pragma mark - Scorekeeping
+
+- (void)updateScore
+{
+    if (self.lastRecordedBlackBlockTravelTime) {
+        self.cumulativeBlackBlockTravelTime -= [self.lastRecordedBlackBlockTravelTime timeIntervalSinceNow];
+        double score = self.blackBlockDistanceTraveled / self.cumulativeBlackBlockTravelTime;
+        if (score > self.maxScore) self.maxScore = score;
+        if ((score != self.lastScore) || ![self.scoreLabel.text length]) {
+            self.scoreLabel.textColor = [UIColor blackColor];
+            self.scoreLabel.text = [NSString stringWithFormat:@"%.0f\n%.0f", score, self.maxScore];
+            [self updateScoreBoundary];
+        } else if (!CGPointEqualToPoint(self.scoreLabel.center, self.scoreBoundaryCenter)) {
+            [self updateScoreBoundary];
+        }
+    } else {
+        [self.animator addBehavior:self.blackBlockTracker];
+        self.scoreLabel.text = nil;
+    }
+    self.lastRecordedBlackBlockTravelTime = [NSDate date];
+}
+
+- (UILabel *)scoreLabel
+{
+    if (!_scoreLabel) {
+        UILabel *scoreLabel = [[UILabel alloc] initWithFrame:self.view.bounds];
+        scoreLabel.font = [scoreLabel.font fontWithSize:64];
+        scoreLabel.textAlignment = NSTextAlignmentCenter;
+        scoreLabel.numberOfLines = 2;
+        scoreLabel.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleLeftMargin|UIViewAutoresizingFlexibleRightMargin;
+        [self.view insertSubview:scoreLabel atIndex:0];
+        _scoreLabel = scoreLabel;
+    }
+    return _scoreLabel;
+}
+
+- (void)updateScoreBoundary
+{
+    CGSize scoreSize = [self.scoreLabel.text sizeWithAttributes:@{ NSFontAttributeName : self.scoreLabel.font}];
+    self.scoreBoundaryCenter = self.scoreLabel.center;
+    CGRect scoreRect = CGRectMake(self.scoreBoundaryCenter.x-scoreSize.width/2,
+                                  self.scoreBoundaryCenter.y-scoreSize.height/2,
+                                  scoreSize.width,
+                                  scoreSize.height);
+    [self.scoreBoundary removeBoundaryWithIdentifier:@"Score"];
+    [self.scoreBoundary addBoundaryWithIdentifier:@"Score"
+                                          forPath:[UIBezierPath bezierPathWithRect:scoreRect]];
+}
+
+- (UICollisionBehavior *)scoreBoundary
+{
+    if (!_scoreBoundary) {
+        UICollisionBehavior *scoreBoundary = [[UICollisionBehavior alloc] initWithItems:@[self.redBlock, self.blackBlock]];
+        [self.animator addBehavior:scoreBoundary];
+        _scoreBoundary = scoreBoundary;
+    }
+    return _scoreBoundary;
+}
+
+- (UIDynamicBehavior *)blackBlockTracker
+{
+    if (!_blackBlockTracker) {
+        UIDynamicItemBehavior *blackBlockTracker = [[UIDynamicItemBehavior alloc] initWithItems:@[self.blackBlock]];
+        [self.animator addBehavior:blackBlockTracker];
+        __weak BouncerViewController *weakSelf = self;
+        __block CGPoint lastKnownBlackBlockCenter = self.blackBlock.center;
+        blackBlockTracker.action = ^{
+            CGFloat dx = weakSelf.blackBlock.center.x - lastKnownBlackBlockCenter.x;
+            CGFloat dy = weakSelf.blackBlock.center.y - lastKnownBlackBlockCenter.y;
+            weakSelf.blackBlockDistanceTraveled += sqrt(dx*dx+dy*dy);
+            lastKnownBlackBlockCenter = weakSelf.blackBlock.center;
+        };
+        _blackBlockTracker = blackBlockTracker;
+    }
+    return _blackBlockTracker;
 }
 
 @end
