@@ -7,6 +7,7 @@
 //
 
 #import "BouncerViewController.h"
+#import <CoreMotion/CoreMotion.h>
 
 @interface BouncerViewController ()
 @property (nonatomic, strong) UIView *redBlock;
@@ -14,6 +15,7 @@
 @property (nonatomic, weak) UIGravityBehavior *gravity;
 @property (nonatomic, weak) UICollisionBehavior *collider;
 @property (nonatomic, weak) UIDynamicItemBehavior *elastic;
+@property (nonatomic, strong) CMMotionManager *motionManager;
 @end
 
 @implementation BouncerViewController
@@ -69,6 +71,14 @@ static CGSize blockSize = { 40 , 40 };
     return _elastic;
 }
 
+- (CMMotionManager *)motionManager {
+    if (!_motionManager) {
+        _motionManager = [[CMMotionManager alloc] init];
+        _motionManager.accelerometerUpdateInterval = 0.1; //10 per second
+    }
+    return _motionManager;
+}
+
 - (void)startGame {
     self.redBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(0, 0)];
     self.redBlock.backgroundColor = [UIColor redColor];
@@ -76,6 +86,26 @@ static CGSize blockSize = { 40 , 40 };
     [self.collider addItem:self.redBlock];
     [self.elastic addItem:self.redBlock];
     [self.gravity addItem:self.redBlock];
+    
+    self.gravity.gravityDirection = CGVectorMake(0, 0);
+    
+    if (!self.motionManager.isAccelerometerActive) {
+        [self.motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue mainQueue]
+             withHandler:^(CMAccelerometerData *accelerometerData, NSError *error) {
+                 CGFloat x = accelerometerData.acceleration.x;
+                 CGFloat y = accelerometerData.acceleration.y;
+                 switch (self.interfaceOrientation) {
+                     case UIInterfaceOrientationLandscapeRight:
+                         self.gravity.gravityDirection = CGVectorMake(-y, -x); break;
+                     case UIInterfaceOrientationLandscapeLeft:
+                         self.gravity.gravityDirection = CGVectorMake(y, x); break;
+                     case UIInterfaceOrientationPortrait:
+                         self.gravity.gravityDirection = CGVectorMake(x, -y); break;
+                     case UIInterfaceOrientationPortraitUpsideDown:
+                         self.gravity.gravityDirection = CGVectorMake(-x, y); break;
+                 }
+             }];
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated {
