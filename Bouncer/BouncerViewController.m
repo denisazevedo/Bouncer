@@ -10,7 +10,8 @@
 #import <CoreMotion/CoreMotion.h>
 
 @interface BouncerViewController ()
-@property (nonatomic, strong) UIView *redBlock;
+@property (nonatomic, weak) UIView *redBlock;
+@property (nonatomic, weak) UIView *blackBlock;
 @property (nonatomic, strong) UIDynamicAnimator *animator;
 @property (nonatomic, weak) UIGravityBehavior *gravity;
 @property (nonatomic, weak) UICollisionBehavior *collider;
@@ -80,12 +81,16 @@ static CGSize blockSize = { 40 , 40 };
 }
 
 - (void)startGame {
-    self.redBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(0, 0)];
-    self.redBlock.backgroundColor = [UIColor redColor];
     
+    self.redBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(-100, 0)];
+    self.redBlock.backgroundColor = [UIColor redColor];
     [self.collider addItem:self.redBlock];
     [self.elastic addItem:self.redBlock];
     [self.gravity addItem:self.redBlock];
+
+    self.blackBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(100, 0)];
+    self.blackBlock.backgroundColor = [UIColor blackColor];
+    [self.collider addItem:self.blackBlock];
     
     self.gravity.gravityDirection = CGVectorMake(0, 0);
     
