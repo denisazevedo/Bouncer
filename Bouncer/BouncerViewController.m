@@ -185,11 +185,12 @@ static CGSize blockSize = { 40 , 40 };
                                                       object:nil
                                                        queue:nil
                                                   usingBlock:^(NSNotification *note) {
-                                                      [self resumeGame];
+                                                      // only resume if we regain active and this VC is on screen at the time
+                                                      if (self.view.window) [self resumeGame];
                                                   }];
 }
 
-- (void)tap {
+- (IBAction)tap {
     if ([self isPaused]) {
         [self resumeGame];
     } else {
