@@ -86,6 +86,8 @@ static CGSize blockSize = { 40 , 40 };
     return _elastic;
 }
 
+#pragma mark - Core Motion
+
 - (CMMotionManager *)motionManager {
     if (!_motionManager) {
         _motionManager = [[CMMotionManager alloc] init];
@@ -94,17 +96,31 @@ static CGSize blockSize = { 40 , 40 };
     return _motionManager;
 }
 
-- (void)startGame {
+#pragma mark - Pausing and Resuming Game
+
+- (void)pauseGame {
+    [self.motionManager stopAccelerometerUpdates];
+    self.gravity.gravityDirection = CGVectorMake(0, 0);
+    [self pauseScoring];
+}
+
+- (BOOL)isPaused {
+    return !self.motionManager.isAccelerometerActive;
+}
+
+- (void)resumeGame {
     
-    self.redBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(-100, 0)];
-    self.redBlock.backgroundColor = [UIColor redColor];
-    [self.collider addItem:self.redBlock];
-    [self.elastic addItem:self.redBlock];
-    [self.gravity addItem:self.redBlock];
-    
-    self.blackBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(100, 0)];
-    self.blackBlock.backgroundColor = [UIColor blackColor];
-    [self.collider addItem:self.blackBlock];
+    if (!self.redBlock) {
+        self.redBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(-100, 0)];
+        self.redBlock.backgroundColor = [UIColor redColor];
+        [self.collider addItem:self.redBlock];
+        [self.elastic addItem:self.redBlock];
+        [self.gravity addItem:self.redBlock];
+        
+        self.blackBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(100, 0)];
+        self.blackBlock.backgroundColor = [UIColor blackColor];
+        [self.collider addItem:self.blackBlock];
+    }
     
     self.gravity.gravityDirection = CGVectorMake(0, 0);
     
@@ -132,7 +148,20 @@ static CGSize blockSize = { 40 , 40 };
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    [self startGame];
+    [self resumeGame];
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self.view addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap)]];
+}
+
+- (void)tap {
+    if ([self isPaused]) {
+        [self resumeGame];
+    } else {
+        [self pauseGame];
+    }
 }
 
 #pragma mark - Scorekeeping
@@ -155,6 +184,24 @@ static CGSize blockSize = { 40 , 40 };
         self.scoreLabel.text = nil;
     }
     self.lastRecordedBlackBlockTravelTime = [NSDate date];
+}
+
+- (void)pauseScoring
+{
+    self.lastRecordedBlackBlockTravelTime = nil;
+    self.scoreLabel.text = @"Paused";
+    self.scoreLabel.textColor = [UIColor lightGrayColor];
+    [self.animator removeBehavior:self.blackBlockTracker];
+}
+
+- (void)resetScore
+{
+    self.blackBlockDistanceTraveled = 0;
+    self.lastRecordedBlackBlockTravelTime = nil;
+    self.cumulativeBlackBlockTravelTime = 0;
+    self.maxScore = 0;
+    self.lastScore = 0;
+    self.scoreLabel.text = @"";
 }
 
 - (UILabel *)scoreLabel
