@@ -16,6 +16,7 @@
 @property (nonatomic, weak) UIGravityBehavior *gravity;
 @property (nonatomic, weak) UICollisionBehavior *collider;
 @property (nonatomic, weak) UIDynamicItemBehavior *elastic;
+@property (nonatomic, weak) UIDynamicItemBehavior *quicksand;
 @property (nonatomic, strong) CMMotionManager *motionManager;
 // scoring properties
 @property (nonatomic, weak) UILabel *scoreLabel;
@@ -86,6 +87,16 @@ static CGSize blockSize = { 40 , 40 };
     return _elastic;
 }
 
+- (UIDynamicItemBehavior *)quicksand {
+    if (!_quicksand) {
+        UIDynamicItemBehavior *quicksand = [[UIDynamicItemBehavior alloc] init];
+        quicksand.resistance = 0;
+        [self.animator addBehavior:quicksand];
+        self.quicksand = quicksand;
+    }
+    return _quicksand;
+}
+
 #pragma mark - Core Motion
 
 - (CMMotionManager *)motionManager {
@@ -101,6 +112,7 @@ static CGSize blockSize = { 40 , 40 };
 - (void)pauseGame {
     [self.motionManager stopAccelerometerUpdates];
     self.gravity.gravityDirection = CGVectorMake(0, 0);
+    self.quicksand.resistance = 10.0;
     [self pauseScoring];
 }
 
@@ -116,12 +128,15 @@ static CGSize blockSize = { 40 , 40 };
         [self.collider addItem:self.redBlock];
         [self.elastic addItem:self.redBlock];
         [self.gravity addItem:self.redBlock];
+        [self.quicksand addItem:self.redBlock];
         
         self.blackBlock = [self addBlockOffsetFromCenterBy:UIOffsetMake(100, 0)];
         self.blackBlock.backgroundColor = [UIColor blackColor];
         [self.collider addItem:self.blackBlock];
+        [self.quicksand addItem:self.blackBlock];
     }
     
+    self.quicksand.resistance = 0;
     self.gravity.gravityDirection = CGVectorMake(0, 0);
     
     if (!self.motionManager.isAccelerometerActive) {
